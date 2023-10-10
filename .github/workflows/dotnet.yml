@@ -39,9 +39,9 @@ jobs:
     # Execute all unit tests in the solution
     - name: Execute unit tests
       run:
-        - cd Sources/
-        - dotnet restore OpenLibraryWS_Wrapper.sln
-        - dotnet test OpenLibraryWS_Wrapper.sln --no-restore
+        cd Sources/
+        dotnet restore OpenLibraryWS_Wrapper.sln
+        dotnet test OpenLibraryWS_Wrapper.sln --no-restore
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
