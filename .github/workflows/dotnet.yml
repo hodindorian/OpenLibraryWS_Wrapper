@@ -60,7 +60,6 @@ jobs:
         Configuration: ${{ matrix.configuration }}
 
     - name: code-inspection
-      uses: hub.codefirst.iut.uca.fr/marc.chevaldonne/codefirst-dronesonarplugin-dotnet7
       run:
         cd Sources/
         dotnet restore OpenLibraryWS_Wrapper.sln
