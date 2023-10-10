@@ -39,7 +39,7 @@ jobs:
     - name: Execute unit tests
       run:
         dotnet restore ./Sources/OpenLibraryWS_Wrapper.sln
-        dotnet test ./Sources/OpenLibraryWS_Wrapper.sln --no-restore
+        dotnet test ./Sources/OpenLibraryWS_Wrapper.sln
 
     - name: Restore the application
       run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
