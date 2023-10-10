@@ -38,7 +38,9 @@ jobs:
 
     # Execute all unit tests in the solution
     - name: Execute unit tests
-      run: dotnet test
+      run: cd Sources/
+      run: dotnet restore OpenLibraryWS_Wrapper.sln
+      run: dotnet test OpenLibraryWS_Wrapper.sln --no-restore
 
     # Restore the application to populate the obj folder with RuntimeIdentifiers
     - name: Restore the application
@@ -56,3 +58,16 @@ jobs:
         Appx_Package_Build_Mode: StoreUpload
         Configuration: ${{ matrix.configuration }}
 
+    - name: code-inspection
+      uses: hub.codefirst.iut.uca.fr/marc.chevaldonne/codefirst-dronesonarplugin-dotnet7
+      settings:
+        sonar_host: https://codefirst.iut.uca.fr/sonar/
+        sonar_token: michel
+      run: cd Sources/
+      run: dotnet restore OpenLibraryWS_Wrapper.sln
+      run: dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url=$${PLUGIN_SONAR_HOST} /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login=$${PLUGIN_SONAR_TOKEN}
+      run: dotnet build OpenLibraryWS_Wrapper.sln -c Release --no-restore
+      run: dotnet test OpenLibraryWS_Wrapper.sln --logger trx --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --collect "XPlat Code Coverage"
+      run: reportgenerator -reports:"**/coverage.cobertura.xml" -reporttypes:SonarQube -targetdir:"coveragereport"
+      run: dotnet publish OpenLibraryWS_Wrapper.sln -c Release --no-restore -o CI_PROJECT_DIR/build/release
+      run: dotnet sonarscanner end /d:sonar.login=$${PLUGIN_SONAR_TOKEN}
