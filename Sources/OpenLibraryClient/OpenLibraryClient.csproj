@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\LibraryDTO\LibraryDTO.csproj" />
+    <ProjectReference Include="..\DtoAbstractLayer\DtoAbstractLayer.csproj" />
+    <ProjectReference Include="..\JsonReader\JsonReader.csproj" />
+  </ItemGroup>
+</Project>
