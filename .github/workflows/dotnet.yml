@@ -61,7 +61,7 @@ jobs:
 
     - name: code-inspection
       uses: hub.codefirst.iut.uca.fr/marc.chevaldonne/codefirst-dronesonarplugin-dotnet7
-      settings:
+      with:
         sonar_host: https://codefirst.iut.uca.fr/sonar/
         sonar_token: michel
       run:
