@@ -1,131 +1,114 @@
-name: .NET Core Desktop
+kind: pipeline
+type: docker
+name: myFirstPipeline
 
-on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+trigger:
+  event:
+    - push
 
-jobs:
+steps:
+  - name: build
+    image: mcr.microsoft.com/dotnet/sdk:7.0
+    commands:
+      - cd Sources
+      - dotnet restore OpenLibraryWS_Wrapper.sln
+      - dotnet build OpenLibraryWS_Wrapper.sln -c Release --no-restore
+      - dotnet publish OpenLibraryWS_Wrapper.sln -c Release --no-restore -o $CI_PROJECT_DIR/build/release
 
-  build:
+  - name: tests
+    image: mcr.microsoft.com/dotnet/sdk:7.0
+    commands:
+      - cd Sources/
+      - dotnet restore OpenLibraryWS_Wrapper.sln
+      - dotnet test OpenLibraryWS_Wrapper.sln --no-restore
+    depends_on: [build]
 
-    strategy:
-      matrix:
-        configuration: [Debug, Release]
+  - name: code-inspection
+    image: hub.codefirst.iut.uca.fr/marc.chevaldonne/codefirst-dronesonarplugin-dotnet7
+    settings:
+      sonar_host: https://codefirst.iut.uca.fr/sonar/
+      sonar_token:
+        from_secret: SECRET_SONAR_LOGIN
+    commands:
+      - cd Sources/
+      - dotnet restore OpenLibraryWS_Wrapper.sln
+      - dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url=$${PLUGIN_SONAR_HOST} /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login=$${PLUGIN_SONAR_TOKEN}
+      - dotnet build OpenLibraryWS_Wrapper.sln -c Release --no-restore
+      - dotnet test OpenLibraryWS_Wrapper.sln --logger trx --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --collect "XPlat Code Coverage"
+      - reportgenerator -reports:"**/coverage.cobertura.xml" -reporttypes:SonarQube -targetdir:"coveragereport"
+      - dotnet publish OpenLibraryWS_Wrapper.sln -c Release --no-restore -o CI_PROJECT_DIR/build/release
+      - dotnet sonarscanner end /d:sonar.login=$${PLUGIN_SONAR_TOKEN}
 
-    runs-on: windows-latest  # For a list of available runner types, refer to
-                             # https://help.github.com/en/actions/reference/workflow-syntax-for-github-actions#jobsjob_idruns-on
+  - name: generate-and-deploy-docs
+    image: hub.codefirst.iut.uca.fr/thomas.bellembois/codefirst-docdeployer
+    failure: ignore
+    volumes:
+      - name: docs
+        path: /docs
+    commands:
+      - /entrypoint.sh
+    when:
+      branch:
+        - master
+      event:
+        - push
+        - pull_request
+    depends_on: [build,tests]
 
-    env:
-      Solution_Name: your-solution-name                         # Replace with your solution name, i.e. MyWpfApp.sln.
-      Test_Project_Path: your-test-project-path                 # Replace with the path to your test project, i.e. MyWpfApp.Tests\MyWpfApp.Tests.csproj.
-      Wap_Project_Directory: your-wap-project-directory-name    # Replace with the Wap project directory relative to the solution, i.e. MyWpfApp.Package.
-      Wap_Project_Path: your-wap-project-path                   # Replace with the path to your Wap project, i.e. MyWpf.App.Package\MyWpfApp.Package.wapproj.
+  - name: generate-swashbuckle
+    image: mcr.microsoft.com/dotnet/sdk:7.0
+    commands:
+      - cd Sources/OpenLibraryWrapper
+      - dotnet tool install --version 6.5.0 Swashbuckle.AspNetCore.Cli --tool-path /bin
+      - /bin/swagger tofile --output /drone/src/swagger.json bin/Release/net7.0/OpenLibraryWrapper.dll v1
+    depends_on: [build]
 
-      steps:
-        - name: build
-          image: mcr.microsoft.com/dotnet/sdk:7.0
-          commands:
-            - cd Sources
-            - dotnet restore OpenLibraryWS_Wrapper.sln
-            - dotnet build OpenLibraryWS_Wrapper.sln -c Release --no-restore
-            - dotnet publish OpenLibraryWS_Wrapper.sln -c Release --no-restore -o $CI_PROJECT_DIR/build/release
-      
-        - name: tests
-          image: mcr.microsoft.com/dotnet/sdk:7.0
-          commands:
-            - cd Sources/
-            - dotnet restore OpenLibraryWS_Wrapper.sln
-            - dotnet test OpenLibraryWS_Wrapper.sln --no-restore
-          depends_on: [build]
-      
-        - name: code-inspection
-          image: hub.codefirst.iut.uca.fr/marc.chevaldonne/codefirst-dronesonarplugin-dotnet7
-          settings:
-            sonar_host: https://codefirst.iut.uca.fr/sonar/
-            sonar_token:
-              from_secret: SECRET_SONAR_LOGIN
-          commands:
-            - cd Sources/
-            - dotnet restore OpenLibraryWS_Wrapper.sln
-            - dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url=$${PLUGIN_SONAR_HOST} /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login=$${PLUGIN_SONAR_TOKEN}
-            - dotnet build OpenLibraryWS_Wrapper.sln -c Release --no-restore
-            - dotnet test OpenLibraryWS_Wrapper.sln --logger trx --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --collect "XPlat Code Coverage"
-            - reportgenerator -reports:"**/coverage.cobertura.xml" -reporttypes:SonarQube -targetdir:"coveragereport"
-            - dotnet publish OpenLibraryWS_Wrapper.sln -c Release --no-restore -o CI_PROJECT_DIR/build/release
-            - dotnet sonarscanner end /d:sonar.login=$${PLUGIN_SONAR_TOKEN}
-      
-        - name: generate-and-deploy-docs
-          image: hub.codefirst.iut.uca.fr/thomas.bellembois/codefirst-docdeployer
-          failure: ignore
-          volumes:
-            - name: docs
-              path: /docs
-          commands:
-            - /entrypoint.sh
-          when:
-            branch:
-              - master
-            event:
-              - push
-              - pull_request
-          depends_on: [build,tests]
-      
-        - name: generate-swashbuckle
-          image: mcr.microsoft.com/dotnet/sdk:7.0
-          commands:
-            - cd Sources/OpenLibraryWrapper
-            - dotnet tool install --version 6.5.0 Swashbuckle.AspNetCore.Cli --tool-path /bin
-            - /bin/swagger tofile --output /drone/src/swagger.json bin/Release/net7.0/OpenLibraryWrapper.dll v1
-          depends_on: [build]
-      
-        - name: deploy-swagger
-          image: hub.codefirst.iut.uca.fr/maxime.batista/codefirst-docdeployer
-          commands:
-            - /entrypoint.sh --type swagger --loc /drone/src/swagger.json
-          depends_on: [generate-swashbuckle]
-      
-        - name: docker-build-and-push
-          image: plugins/docker
-          settings:
-            dockerfile: Sources/Dockerfile
-            context: Sources/
-            registry: hub.codefirst.iut.uca.fr
-            repo: hub.codefirst.iut.uca.fr/dorian.hodin/openlibraryws_wrapper
-            username:
-              from_secret: SECRET_REGISTRY_USERNAME
-            password:
-              from_secret: SECRET_REGISTRY_PASSWORD
-          depends_on: [build,tests]
-      
-        - name: deploy-app
-          image: hub.codefirst.iut.uca.fr/thomas.bellembois/codefirst-dockerproxy-clientdrone:latest
-          environment:
-            IMAGENAME: hub.codefirst.iut.uca.fr/dorian.hodin/openlibraryws_wrapper
-            CONTAINERNAME: app_dotnet
-            COMMAND: create
-            OVERWRITE: true
-            CODEFIRST_CLIENTDRONE_ENV_DB_DATABASE:
-              from_secret: db_host
-          depends_on: [ docker-build-and-push ]
-      
-      
-        - name: deploy-mariadb
-          image: hub.codefirst.iut.uca.fr/thomas.bellembois/codefirst-dockerproxy-clientdrone:latest
-          environment:
-            IMAGENAME: mariadb:10
-            CONTAINERNAME: db_dotnet
-            COMMAND: create
-            OVERWRITE: true
-            PRIVATE: true
-            CODEFIRST_CLIENTDRONE_ENV_MARIADB_ROOT_PASSWORD:
-              from_secret: db_root_password
-            CODEFIRST_CLIENTDRONE_ENV_MARIADB_DATABASE:
-              from_secret: db_database
-            CODEFIRST_CLIENTDRONE_ENV_MARIADB_USER:
-              from_secret: db_user
-            CODEFIRST_CLIENTDRONE_ENV_MARIADB_PASSWORD:
-              from_secret: db_password
-          depends_on: [deploy-app]
-  
+  - name: deploy-swagger
+    image: hub.codefirst.iut.uca.fr/maxime.batista/codefirst-docdeployer
+    commands:
+      - /entrypoint.sh --type swagger --loc /drone/src/swagger.json
+    depends_on: [generate-swashbuckle]
+
+  - name: docker-build-and-push
+    image: plugins/docker
+    settings:
+      dockerfile: Sources/Dockerfile
+      context: Sources/
+      registry: hub.codefirst.iut.uca.fr
+      repo: hub.codefirst.iut.uca.fr/dorian.hodin/openlibraryws_wrapper
+      username:
+        from_secret: SECRET_REGISTRY_USERNAME
+      password:
+        from_secret: SECRET_REGISTRY_PASSWORD
+    depends_on: [build,tests]
+
+  - name: deploy-app
+    image: hub.codefirst.iut.uca.fr/thomas.bellembois/codefirst-dockerproxy-clientdrone:latest
+    environment:
+      IMAGENAME: hub.codefirst.iut.uca.fr/dorian.hodin/openlibraryws_wrapper
+      CONTAINERNAME: app_dotnet
+      COMMAND: create
+      OVERWRITE: true
+      CODEFIRST_CLIENTDRONE_ENV_DB_DATABASE:
+        from_secret: db_host
+    depends_on: [ docker-build-and-push ]
+
+
+  - name: deploy-mariadb
+    image: hub.codefirst.iut.uca.fr/thomas.bellembois/codefirst-dockerproxy-clientdrone:latest
+    environment:
+      IMAGENAME: mariadb:10
+      CONTAINERNAME: db_dotnet
+      COMMAND: create
+      OVERWRITE: true
+      PRIVATE: true
+      CODEFIRST_CLIENTDRONE_ENV_MARIADB_ROOT_PASSWORD:
+        from_secret: db_root_password
+      CODEFIRST_CLIENTDRONE_ENV_MARIADB_DATABASE:
+        from_secret: db_database
+      CODEFIRST_CLIENTDRONE_ENV_MARIADB_USER:
+        from_secret: db_user
+      CODEFIRST_CLIENTDRONE_ENV_MARIADB_PASSWORD:
+        from_secret: db_password
+    depends_on: [deploy-app]
+
