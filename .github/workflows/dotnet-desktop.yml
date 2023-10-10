@@ -2,9 +2,9 @@ kind: pipeline
 type: docker
 name: myFirstPipeline
 
-trigger:
-  event:
-    - push
+on :
+  push:
+    branches: [ "main" ]
 
 steps:
   - name: build
