@@ -20,7 +20,7 @@ jobs:
       Solution_Name: ./Sources/OpenLibraryWS_Wrapper.sln
       Test_Project_Path: ./Sources/Tests
       sonar_host: https://codefirst.iut.uca.fr/sonar/
-      sonar_token: michel
+      sonar_token: squ_f0789974f109cae24891d22166ebd688d40ef141
 
     steps:
     - name: Checkout
