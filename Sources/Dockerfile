@@ -1,5 +1,4 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0 as build-env
-WORKDIR ./Sources
 COPY . .
 RUN dotnet restore OpenLibraryWS_Wrapper.sln
 RUN dotnet publish -c Release -o /publish
