@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:7.0 as build-env
 WORKDIR ./Sources
 COPY . .
-RUN dotnet restore ./OpenLibraryWrapper/OpenLibraryWrapper.csproj
+RUN dotnet restore OpenLibraryWS_Wrapper.sln
 RUN dotnet publish -c Release -o /publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 as runtime
