@@ -32,15 +32,16 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
+      - name: build
+        run: |
+          cd Sources
+          dotnet restore OpenLibraryWS_Wrapper.sln
+          dotnet build OpenLibraryWS_Wrapper.sln -c Release --no-restore
+          dotnet publish OpenLibraryWS_Wrapper.sln -c Release --no-restore -o $CI_PROJECT_DIR/build/release
+
       - name: Execute unit tests
         run:
-          dotnet test ./Sources/OpenLibraryWS_Wrapper.sln
-
-      - name: Restore the application
-        run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
-        env:
-          Configuration: ${{ matrix.configuration }}
-        
+          dotnet test ./Sources/OpenLibraryWS_Wrapper.sln        
 
       - name: End SonarQube Analysis
         run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
