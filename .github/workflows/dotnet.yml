@@ -28,7 +28,7 @@ jobs:
         run: dotnet tool install --global dotnet-sonarscanner
 
       - name: Run SonarQube Scanner
-        run: dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url="https://codefirst.iut.uca.fr/sonar/" /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login="$SONARQUBE_TOKEN"
+        run: dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url="https://codefirst.iut.uca.fr/sonar/" /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login="$SONAR_TOKEN"
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
