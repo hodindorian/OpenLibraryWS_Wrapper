@@ -10,6 +10,11 @@ on:
 jobs:
   sonarqube:
     runs-on: ubuntu-latest
+
+    env:
+      Solution_Name: ./Sources/OpenLibraryWS_Wrapper.sln
+      Test_Project_Path: ./Sources/Tests
+      
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -19,57 +24,30 @@ jobs:
         with:
           dotnet-version: 6.0.x
 
+      - name: Setup MSBuild.exe
+        uses: microsoft/setup-msbuild@v1.0.2
+
       - name: Run SonarQube Scanner
-        run: dotnet sonarscanner begin /k:"OpenLibraryWrapper_Dorian_HODIN" /d:sonar.host.url="https://codefirst.iut.uca.fr/sonar/" /d:sonar.login="$SONAR_TOKEN"
+        run: dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url="https://codefirst.iut.uca.fr/sonar/" /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login="$SONARQUBE_TOKEN"
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
-      - name: Build and test
-        run: dotnet build
+      - name: Execute unit tests
+        run:
+          dotnet test ./Sources/OpenLibraryWS_Wrapper.sln
+
+      - name: Restore the application
+        run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
+        env:
+          Configuration: ${{ matrix.configuration }}
+        
 
       - name: End SonarQube Analysis
         run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
         env:
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
 
-
-
-  build:
-
-    strategy:
-      matrix:
-        configuration: [Debug, Release]
-
-    runs-on: windows-latest
-
-    env:
-      Solution_Name: ./Sources/OpenLibraryWS_Wrapper.sln
-      Test_Project_Path: ./Sources/Tests
-      sonar_host: https://codefirst.iut.uca.fr/sonar/
-      sonar_token: squ_f0789974f109cae24891d22166ebd688d40ef141
-
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
-
-    - name: Install .NET Core
-      uses: actions/setup-dotnet@v3
-      with:
-        dotnet-version: 6.0.x
-
-    - name: Setup MSBuild.exe
-      uses: microsoft/setup-msbuild@v1.0.2
-
-    - name: Execute unit tests
-      run:
-        dotnet test ./Sources/OpenLibraryWS_Wrapper.sln
-
-    - name: Restore the application
-      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
-      env:
-        Configuration: ${{ matrix.configuration }}
+    
 
 
 
