@@ -62,33 +62,14 @@ jobs:
     - name: Setup MSBuild.exe
       uses: microsoft/setup-msbuild@v1.0.2
 
-    #- name: Execute unit tests
-    #  run:
-    #    dotnet test ./Sources/OpenLibraryWS_Wrapper.sln
+    - name: Execute unit tests
+      run:
+        dotnet test ./Sources/OpenLibraryWS_Wrapper.sln
 
-    #- name: Restore the application
-    #  run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
-    #  env:
-    #    Configuration: ${{ matrix.configuration }}
+    - name: Restore the application
+      run: msbuild $env:Solution_Name /t:Restore /p:Configuration=$env:Configuration
+      env:
+        Configuration: ${{ matrix.configuration }}
 
-
-    # Create the app package by building and packaging the Windows Application Packaging project
-    #- name: Create the app package
-    #  run: msbuild $env:Solution_Name /p:Configuration=$env:Configuration /p:UapAppxPackageBuildMode=$env:Appx_Package_Build_Mode /p:AppxBundle=$env:Appx_Bundle /p:PackageCertificateKeyFile=GitHubActionsWorkflow.pfx /p:PackageCertificatePassword=${{ secrets.Pfx_Key }}
-    #  env:
-    #    Appx_Bundle: Always
-    #    Appx_Bundle_Platforms: x86|x64
-    #    Appx_Package_Build_Mode: StoreUpload
-    #    Configuration: ${{ matrix.configuration }}
-
-    - name: code-inspection
-      run: |
-        dotnet restore ./Sources/OpenLibraryWS_Wrapper.sln
-        dotnet tool install --global dotnet-sonarscanner
-        dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url=$env:sonar_host /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login=$env:sonar_token
-        dotnet build ./Sources/OpenLibraryWS_Wrapper.sln -c Release --no-restore
-        dotnet test ./Sources/OpenLibraryWS_Wrapper.sln --logger trx --no-restore /p:CollectCoverage=true /p:CoverletOutputFormat=cobertura --collect "XPlat Code Coverage"
-        dotnet publish ./Sources/OpenLibraryWS_Wrapper.sln -c Release --no-restore -o CI_PROJECT_DIR/build/release
-        dotnet sonarscanner end /d:sonar.login=$end:sonar_token
 
 
