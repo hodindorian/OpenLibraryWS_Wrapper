@@ -24,9 +24,6 @@ jobs:
         with:
           dotnet-version: 6.0.x
 
-      - name: Setup MSBuild.exe
-        uses: microsoft/setup-msbuild@v1.0.2
-
       - name: Run SonarQube Scanner
         run: dotnet sonarscanner begin /k:Dotnet_Dorian_HODIN /d:sonar.host.url="https://codefirst.iut.uca.fr/sonar/" /d:sonar.coverageReportPaths="coveragereport/SonarQube.xml" /d:sonar.coverage.exclusions="Tests/**" /d:sonar.login="$SONARQUBE_TOKEN"
         env:
