@@ -6,7 +6,36 @@ on:
   pull_request:
     branches: [ "main" ]
 
+
 jobs:
+  sonarqube:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up .NET Core
+        uses: actions/setup-dotnet@v1
+        with:
+          dotnet-version: 5.x # Sélectionnez la version appropriée de .NET
+
+      - name: Build project
+        run: dotnet build
+
+      - name: Run SonarQube Scanner
+        run: dotnet sonarscanner begin /k:"OpenLibraryWrapper_Dorian_HODIN" /d:sonar.host.url="https://codefirst.iut.uca.fr/sonar/" /d:sonar.login="$SONAR_TOKEN"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+
+      - name: Build and test
+        run: dotnet build
+
+      - name: End SonarQube Analysis
+        run: dotnet sonarscanner end /d:sonar.login="$SONAR_TOKEN"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+
+
 
   build:
 
