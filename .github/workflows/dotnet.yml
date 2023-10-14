@@ -8,7 +8,7 @@ on:
 
 
 jobs:
-  build-and-sonar:
+  build-and-sonar-and-docker:
     runs-on: ubuntu-latest
 
     env:
