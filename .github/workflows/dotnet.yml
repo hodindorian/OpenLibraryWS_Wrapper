@@ -37,7 +37,6 @@ jobs:
           cd Sources
           dotnet restore OpenLibraryWS_Wrapper.sln
           dotnet build OpenLibraryWS_Wrapper.sln -c Release --no-restore
-          dotnet publish OpenLibraryWS_Wrapper.sln -c Release --no-restore -o $CI_PROJECT_DIR/build/release
 
       - name: Execute unit tests
         run:
